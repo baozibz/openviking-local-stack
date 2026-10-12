@@ -1,0 +1,13 @@
+# 运行期产物 / 大文件（不入库）
+data/
+models/
+venv/
+logs/
+tmp/
+home/
+ollama/
+*.log
+*.zip
+.load-probe
+.no-autostart
+bot_*.json
