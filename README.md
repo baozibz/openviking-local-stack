@@ -24,17 +24,22 @@ Ollama 上，不需要任何云端 API Key。
 - 配置：`~/.dsh/profiles/desktop/cordis.patch.yml` 末尾的 insert 行
 - 挂载验证：存在 `dsh-openviking-panel/.load-probe` 时会写 `loaded.log`
 
-## 启动 / 停止
+## 启动 / 停止 / 重启
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\start-openviking.ps1
 powershell -ExecutionPolicy Bypass -File .\stop-openviking.ps1
+powershell -ExecutionPolicy Bypass -File .\restart-openviking.ps1
 ```
 
-两个脚本都带 UTF-8 BOM，PowerShell 5.1 与 7 都能跑。`start` 幂等（已在监听的跳过），
+三个脚本都带 UTF-8 BOM，PowerShell 5.1 与 7 都能跑。`start` 幂等（已在监听的跳过），
 冷启动约 **40 秒**，结束时打印 `stack ok=True/False` 并把每次结果写进 `stack.log`；
 `stop` 会连 **VikingBot 的 venv python** 一起收掉——否则它会变成孤儿继续占着 18790，
 导致下次 `--with-bot` 启动失败。
+
+`restart` = `stop` → **等端口真正释放** → `start`，一条命令走完（实测全程约 60 秒，退出码沿用
+`start` 的语义）。**改了 `ov.conf` 必须用它**：配置是启动时读取的，运行期不会重新加载
+（VLM / query_planner / retrieval / embedding 都算）。
 
 > **DSH 启动时自动启动**：已装的面板插件 `dsh-openviking-panel` 会在宿主半边探测 1933，
 > 不通就调用 `start-openviking.ps1` 并校验重试。见
@@ -54,7 +59,8 @@ openviking/
 ├── stack.log                # 每次启动脚本的结果
 ├── autostart.log            # 面板插件自启的决定与重试
 ├── start-openviking.ps1
-└── stop-openviking.ps1
+├── stop-openviking.ps1
+└── restart-openviking.ps1   # stop → 等端口释放 → start（改 ov.conf 后用它）
 ```
 
 `ov` CLI 装在工作区 `.ovcli\`（npm 包 `@openviking/cli`），不在全局 PATH。
